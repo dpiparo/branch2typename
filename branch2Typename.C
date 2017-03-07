@@ -17,8 +17,10 @@
 class A{};
 
 std::string GetBranchTypeName(TBranch* branch) {
-   auto branchEl = dynamic_cast<TBranchElement *>(branch);
-   if (!branchEl) { // This is a fundamental type
+   static const TClassRef tbranchelRef("TBranchElement");
+   if (branch->InheritsFrom(tbranchelRef)) {
+      return static_cast<TBranchElement*>(branch)->GetClassName();
+   } else { // Try the fundamental type
       auto title = branch->GetTitle();
       auto typeCode = title[strlen(title) - 1];
       if (typeCode == 'B') return "char";
@@ -32,8 +34,6 @@ std::string GetBranchTypeName(TBranch* branch) {
       else if (typeCode == 'L') return "Long64_t";
       else if (typeCode == 'l') return "ULong64_t";
       else if (typeCode == 'O') return "bool";
-   } else {
-      return branchEl->GetClassName();
    }
    return "";
 }
