@@ -1,6 +1,8 @@
 #include "TTree.h"
 #include "TBranchElement.h"
+#include "TBranchClones.h"
 #include "TH1F.h"
+#include "TClonesArray.h"
 
 #include <iostream>
 #include <vector>
@@ -9,7 +11,10 @@
 #ifdef __ROOTCLING__
 #pragma link C++ class vector<double*>+;
 #pragma link C++ class list<char>+;
+#pragma link C++ class A+;
 #endif
+
+class A{};
 
 std::string GetBranchTypeName(TBranch* branch) {
    auto branchEl = dynamic_cast<TBranchElement *>(branch);
@@ -28,9 +33,9 @@ std::string GetBranchTypeName(TBranch* branch) {
       else if (typeCode == 'l') return "ULong64_t";
       else if (typeCode == 'O') return "bool";
    } else {
-      return branchEl->GetTypeName();
+      return branchEl->GetClassName();
    }
-   return "CANNOT DETERMINE TYPE!";
+   return "";
 }
 
 void branch2Typename(){
@@ -42,16 +47,21 @@ void branch2Typename(){
    list<char> _list_char;
    vector<double*> _vector_doublep;
    TH1F _th1f;
+   A _a;
+   TClonesArray _clones_tnamed("TNamed");
    t.Branch("_double", &_double);
    t.Branch("_int", &_int);
    t.Branch("_vector_float", &_vector_float);
    t.Branch("_list_char", &_list_char);
    t.Branch("_vector_doublep", &_vector_doublep);
    t.Branch("_th1f", &_th1f);
+   t.Branch("_a", &_a);
+   t.Branch("_clones_tnamed", &_clones_tnamed);
 
    for (auto bo : *t.GetListOfBranches()) {
       auto b = (TBranch*) bo;
-      std::cout << "Branch name " << b->GetName() << " type " << GetBranchTypeName(b) << std::endl;
+      std::cout << "Branch name " << b->GetName()
+                << "\t\t" << GetBranchTypeName(b) << std::endl;
    }
 
 }
