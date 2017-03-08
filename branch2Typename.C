@@ -7,6 +7,10 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <sstream>
+
+using BranchNames = std::vector<std::string>;
+
 
 #ifdef __ROOTCLING__
 #pragma link C++ class vector<double*>+;
@@ -38,9 +42,39 @@ std::string GetBranchTypeName(TBranch* branch) {
    return "";
 }
 
+TTree* gt = nullptr;
+
+std::string BuildMethodCallCode(std::string_view thisTypeName, std::string_view methodName, const BranchNames& bn, void* thisPtr)
+{
+   std::stringstream ss;
+   ss << "((" << thisTypeName << "*)" << thisPtr << ")->" << methodName << "<";
+   const auto bnSize(bn.size());
+   unsigned int i = 0;
+   while(i < bnSize) {
+      auto& branchName = bn[i];
+      auto branch = gt->GetBranch(branchName.c_str());
+      ss << GetBranchTypeName(branch);
+      if (++i != bnSize) {
+         ss << ", ";
+      }
+   }
+   i = 0;
+   ss << ">({";
+   while(i < bnSize) {
+      auto& branchName = bn[i];
+      ss << "\"" << branchName << "\"";
+      if (++i != bnSize) {
+         ss << ", ";
+      }
+   }
+   ss << "});";
+   return ss.str();
+}
+
 void branch2Typename(){
 
    TTree t("myTree","myTree");
+   gt = &t;
    double _double;
    int _int;
    vector<float> _vector_float;
@@ -63,5 +97,11 @@ void branch2Typename(){
       std::cout << "Branch name " << b->GetName()
                 << "\t\t" << GetBranchTypeName(b) << std::endl;
    }
+
+   auto mcallCode = BuildMethodCallCode("ROOT::Experimental::TDataFrameInterface<ROOT::Detail::TDataFrameFilterBase>",
+                                        "Histo1D",
+                                        {"_double", "_vector_doublep", "_th1f"},
+                                        nullptr);
+   std::cout << mcallCode << std::endl;
 
 }
